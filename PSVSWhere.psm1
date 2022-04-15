@@ -14,13 +14,7 @@ function Import-Env
         [string] $HostArchitecture
     )
 
-    if ($Script:Environment)
-    {
-        ForEach ($key in $Script:Environment.Keys)
-        {
-            Set-Item -Path env:$key -Value $Script:Environment[$key]
-        }
-    }
+    Restore-Env
 
     $Script:Environment = @{};
 
@@ -33,6 +27,21 @@ function Import-Env
             $orig = Get-Content Env:$p -ErrorAction SilentlyContinue
             $Script:Environment[$p] = $orig
             Set-Item -Path env:$p -Value $v
+        }
+    }
+}
+
+function Restore-Env
+{
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
+
+    if ($Script:Environment)
+    {
+        foreach ($key in $Script:Environment.Keys)
+        {
+            Write-Verbose "restore env:$key=$($Script:Environment[$key])"
+            Set-Item -Path env:$key -Value $Script:Environment[$key]
         }
     }
 }
@@ -302,4 +311,13 @@ function Set-VisualStudioInstance
     }
 }
 
+function Clear-VisualStudioInstance
+{
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
 
+    process
+    {
+        Restore-Env
+    }
+}

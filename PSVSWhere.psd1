@@ -10,12 +10,14 @@
     FunctionsToExport = @(
         'Get-VisualStudioInstance',
         'Set-VisualStudioInstance',
+        'Clear-VisualStudioInstance',
         'Set-VS2010',
         'Set-VS2012',
         'Set-VS2013',
         'Set-VS2015',
         'Set-VS2017',
         'Set-VS2019',
+        'Clear-VisualStudioInstance',
         'Set-VS2022',
         'Set-WAIK')
     AliasesToExport = @()
