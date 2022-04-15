@@ -96,9 +96,11 @@ function Invoke-VSWhere
         [string[]] $Require,
 
         # A version range for instances to find. Example: [15.0,16.0) will find versions 15.*.
+        [Parameter()]
         [string] $Version,
 
         # Return only the newest version and last installed.
+        [Parameter()]
         [switch] $Latest
     )
 
@@ -110,6 +112,16 @@ function Invoke-VSWhere
     if ($Latest) { $VSWhereArgs += '-latest' }
 
     & "${PSScriptRoot}\vswhere.exe" -format json $VSWhereArgs | ConvertFrom-Json
+}
+
+filter Resolve-Version {
+    switch ($_) {
+        # Map years to version numbers.
+        2022 { 17 }
+        2019 { 16 }
+        2017 { '[15.0,16.0)' }
+        default { $_ }
+    }
 }
 
 function Get-VisualStudioInstance
@@ -128,14 +140,19 @@ function Get-VisualStudioInstance
         [switch] $AllowPrerelease
     )
 
-    $v = Invoke-VSWhere -Version:$Version
+    $splat = @{}
+    if ($Version)
+    {
+        $splat.Version = Resolve-Version $Version
+    }
+
+    $v = Invoke-VSWhere @splat
     if (!$AllowPrerelease)
     {
         $v = $v | Where-Object channelId -notlike '*.Preview'
     }
 
-    $v | Add-Member -MemberType AliasProperty -Name 'PSPath' -Value 'installationPath'
-    return $v
+    $v | Add-Member -PassThru -MemberType AliasProperty -Name 'PSPath' -Value 'installationPath'
 }
 
 function Set-VSEnvComnTools
@@ -302,6 +319,10 @@ function Set-VisualStudioInstance
             'Version'
             {
                 $Instance = Get-VisualStudioInstance -Version $Version
+                if (!$Instance)
+                {
+                    return
+                }
             }
         }
 
@@ -309,6 +330,7 @@ function Set-VisualStudioInstance
         if (!$vsvars32)
         {
             # Fallback to crawling
+            Write-Verbose "${vsvars32} not found, looking for in full instance."
             $vsvars32 = $Instance | Get-ChildItem -Depth 3 -Include 'VsDevCmd.bat', 'vsvars32.bat' | Select-Object -First 1
         }
 
