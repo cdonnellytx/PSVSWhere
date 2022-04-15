@@ -5,6 +5,7 @@ function Import-Env
     [CmdletBinding(SupportsShouldProcess)]
     param
     (
+        [Parameter(Position = 0, Mandatory)]
         [string] $BatFile,
 
         [ValidateSet("x86", "amd64", "arm", "arm64")]
@@ -14,7 +15,7 @@ function Import-Env
         [string] $HostArchitecture
     )
 
-    Restore-Env
+    Restore-Env -ErrorAction Ignore
 
     $Script:Environment = @{};
 
@@ -36,13 +37,20 @@ function Restore-Env
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    if ($Script:Environment)
+    if (!$Script:Environment)
     {
-        foreach ($key in $Script:Environment.Keys)
-        {
-            Write-Verbose "restore env:$key=$($Script:Environment[$key])"
-            Set-Item -Path env:$key -Value $Script:Environment[$key]
-        }
+        Write-Error "No environment to restore."
+        return
+    }
+
+    if ($VerbosePreference)
+    {
+        Write-Verbose "Restoring original environment: $($Script:Environment | Out-String)"
+    }
+
+    foreach ($key in $Script:Environment.Keys)
+    {
+        Set-Item -Path env:$key -Value $Script:Environment[$key]
     }
 }
 
@@ -51,7 +59,10 @@ function Set-VSEnv
     [CmdletBinding(SupportsShouldProcess)]
     param
     (
-        [string] $vsvars32FullPath,
+        [Parameter(Position = 0, Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript({ Test-Path -LiteralPath:$_ })]
+        [string] $LiteralPath,
 
         [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string] $Architecture,
@@ -60,15 +71,8 @@ function Set-VSEnv
         [string] $HostArchitecture
     )
 
-    if (-not (Test-Path $vsvars32FullPath))
-    {
-        Write-Warning "Could not find file '$vsvars32FullPath'";
-        return;
-    }
-
-    Write-Verbose "Importing Visual Studio environment variables from '$vsvars32FullPath'";
-
-    Import-Env $vsvars32FullPath -Architecture $Architecture -HostArchitecture $HostArchitecture
+    Write-Verbose "Importing Visual Studio environment variables from '${LiteralPath}', Architecture=${Architecture}, HostArchitecture=${HostArchitecture}";
+    Import-Env $LiteralPath -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
 function Invoke-VSWhere
@@ -111,16 +115,26 @@ function Invoke-VSWhere
     if ($Version) { $VSWhereArgs += '-version', $Version }
     if ($Latest) { $VSWhereArgs += '-latest' }
 
+    Write-Debug "Running vswhere -format json ${VSWhereArgs}"
     & "${PSScriptRoot}\vswhere.exe" -format json $VSWhereArgs | ConvertFrom-Json
 }
 
 filter Resolve-Version {
-    switch ($_) {
+    $Resolved = switch ($_) {
         # Map years to version numbers.
         2022 { 17 }
         2019 { 16 }
         2017 { '[15.0,16.0)' }
-        default { $_ }
+    }
+
+    if ($Resolved)
+    {
+        Write-Debug "Mapping '${_}' => '${Resolved}'"
+        return $Resolved
+    }
+    else
+    {
+        return $_
     }
 }
 
@@ -140,19 +154,14 @@ function Get-VisualStudioInstance
         [switch] $AllowPrerelease
     )
 
-    $splat = @{}
-    if ($Version)
-    {
-        $splat.Version = Resolve-Version $Version
-    }
-
-    $v = Invoke-VSWhere @splat
+    $v = Invoke-VSWhere -Version:($Version | Resolve-Version)
     if (!$AllowPrerelease)
     {
         $v = $v | Where-Object channelId -notlike '*.Preview'
     }
 
-    $v | Add-Member -PassThru -MemberType AliasProperty -Name 'PSPath' -Value 'installationPath'
+    $v | Add-Member -MemberType AliasProperty -Name 'PSPath' -Value 'installationPath'
+    return $v
 }
 
 function Set-VSEnvComnTools
@@ -326,22 +335,21 @@ function Set-VisualStudioInstance
             }
         }
 
-        $vsvars32 = $Instance | Get-ChildItem -Include 'Common7\Tools\VsDevCmd.bat'
+        $vsvars32 = $Instance | Get-ChildItem -Filter 'Common7\Tools\VsDevCmd.bat'
         if (!$vsvars32)
         {
             # Fallback to crawling
-            Write-Verbose "${vsvars32} not found, looking for in full instance."
+            Write-Verbose "Common7\Tools\VsDevCmd.bat not found, searching full instance."
             $vsvars32 = $Instance | Get-ChildItem -Depth 3 -Include 'VsDevCmd.bat', 'vsvars32.bat' | Select-Object -First 1
+            if (!$vsvars32)
+            {
+                Write-Error "Cannot find vsdevcmd.bat or vsvars32.bat for $Instance"
+                return
+            }
         }
 
-        if ($vsvars32)
-        {
-            Set-VSEnv $vsvars32.FullName -Architecture $Architecture -HostArchitecture $HostArchitecture
-        }
-        else
-        {
-            Write-Error "Cannot find vsdevcmd.bat or vsvars32.bat for $Instance"
-        }
+        Write-Verbose "Found ${vsvars32}"
+        Set-VSEnv $vsvars32
     }
 }
 
@@ -350,8 +358,6 @@ function Clear-VisualStudioInstance
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    process
-    {
-        Restore-Env
-    }
+    Restore-Env
+    $Script:Environment = $null
 }
