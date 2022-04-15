@@ -283,16 +283,28 @@ function Set-VS2022
 
 function Set-VisualStudioInstance
 {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Version')]
     param
     (
-        [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
+        [Parameter(ParameterSetName = 'Instance', Position = 0, Mandatory, ValueFromPipeline)]
         [ValidateNotNullOrEmpty()]
-        [PSObject] $Instance
+        [PSObject] $Instance,
+
+        [Parameter(ParameterSetName = 'Version', Position = 0, Mandatory, ValueFromPipeline)]
+        [string] $Version
     )
 
     process
     {
+        switch ($PSCmdlet.ParameterSetName)
+        {
+            'Instance' {}
+            'Version'
+            {
+                $Instance = Get-VisualStudioInstance -Version $Version
+            }
+        }
+
         $vsvars32 = $Instance | Get-ChildItem -Include 'Common7\Tools\VsDevCmd.bat'
         if (!$vsvars32)
         {
