@@ -54,7 +54,7 @@ function Restore-Env
     }
 }
 
-function Set-VSEnv
+function Use-VSEnv
 {
     [CmdletBinding(SupportsShouldProcess)]
     param
@@ -75,6 +75,12 @@ function Set-VSEnv
     Import-Env $LiteralPath -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
+<#
+.SYNOPSIS
+Wrapper for `vswhere.exe`
+
+.SCOPE Private
+#>
 function Invoke-VSWhere
 {
     [CmdletBinding()]
@@ -119,57 +125,102 @@ function Invoke-VSWhere
     & "${PSScriptRoot}\vswhere.exe" -format json $VSWhereArgs | ConvertFrom-Json
 }
 
-filter Resolve-Version {
-    $Resolved = switch ($_) {
-        # Map years to version numbers.
-        2022 { 17 }
-        2019 { 16 }
-        2017 { '[15.0,16.0)' }
+filter Resolve-NumericVersion
+{
+    # vswhere will treat an integer as VERSION >= integer.
+    # We just want major version.
+    [ref] $ref = $null
+    if ([int]::TryParse($_, $ref))
+    {
+        return '[{0}, {1})' -f $ref.Value, ($ref.Value + 1)
     }
 
-    if ($Resolved)
+    return $_
+}
+
+filter Resolve-YearToVersion
+{
+    # Map years to version numbers.
+    switch ($_)
     {
-        Write-Debug "Mapping '${_}' => '${Resolved}'"
-        return $Resolved
-    }
-    else
-    {
-        return $_
+        2022 { 17 }
+        2019 { 16 }
+        2017 { 15 }
+        2015 { 14 }
+        2013 { 12 }
+        2012 { 11 }
+        2010 { 10 }
+        default { $_ }
     }
 }
 
+<#
+.SYNOPSIS
+Gets the given Visual Studio instance matching the specified parameters.
+
+.EXAMPLE
+Get Visual Studio 2022 (17.0).
+
+PS> Get-VisualStudioInstance -Version 17
+
+installationName    : VisualStudio/17.2.6+32630.192
+installationPath    : C:\Program Files\Microsoft Visual Studio\2022\Enterprise
+installationVersion : 17.2.32630.192
+displayName         : Visual Studio Enterprise 2022
+...
+
+.EXAMPLE
+
+Same as previous example but by year.
+
+PS> Get-VisualStudioInstance -Version 2022
+
+installationName    : VisualStudio/17.2.6+32630.192
+installationPath    : C:\Program Files\Microsoft Visual Studio\2022\Enterprise
+installationVersion : 17.2.32630.192
+displayName         : Visual Studio Enterprise 2022
+...
+
+#>
 function Get-VisualStudioInstance
 {
     [CmdletBinding()]
     [OutputType([PSObject[]])]
     param
     (
-        # The version by which to limit.
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
+        # The version range by which to limit, if any.
+        # Default returns all non-prerelease versions.
+        [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [string] $Version,
 
         # Allow prerelease versions.
-        [Parameter()]
+        [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [switch] $AllowPrerelease
     )
 
-    $splat = @{}
-    if ($Version)
+    process
     {
-        $splat.Version = Resolve-Version $Version
-    }
+        $ResolvedVersion = $Version | Resolve-YearToVersion | Resolve-NumericVersion
+        Write-Verbose "Getting Visual Studio version '${Version}' (as '${ResolvedVersion}')"
 
-    $v = Invoke-VSWhere @splat
-    if (!$AllowPrerelease)
-    {
-        $v = $v | Where-Object channelId -notlike '*.Preview'
-    }
+        $v = Invoke-VSWhere -Version:$ResolvedVersion
+        if (!$AllowPrerelease)
+        {
+            $v = $v | Where-Object channelId -notlike '*.Preview'
+        }
 
-    $v | Add-Member -PassThru -MemberType AliasProperty -Name 'PSPath' -Value 'installationPath'
+        if (!$v -and $Version)
+        {
+            # They didn't request "all", they requested a specific value.
+            Write-Error "Cannot find Visual Studio version '${Version}' because it is not installed."
+            return
+        }
+
+        Add-Member -PassThru -InputObject $v -MemberType AliasProperty -Name 'PSPath' -Value 'installationPath'
+    }
 }
 
-function Set-VSEnvComnTool
+function Use-VSEnvComnTool
 {
     [CmdletBinding(SupportsShouldProcess)]
     param
@@ -186,89 +237,75 @@ function Set-VSEnvComnTool
 
     $vsvars32FullPath = Join-Path (Get-Item Env:$envVar).Value $BatFile
 
-    Set-VSEnv $vsvars32FullPath
+    Use-VSEnv $vsvars32FullPath
 }
 
-function Set-VSEnvVSWhere
-{
-    [CmdletBinding(SupportsShouldProcess)]
-    param
-    (
-        [string] $Version,
 
-        [string] $BatFile,
-
-        [ValidateSet("x86", "amd64", "arm", "arm64")]
-        [string] $Architecture,
-
-        [ValidateSet("x86", "amd64")]
-        [string] $HostArchitecture
-    )
-
-    $vsPath = Invoke-VSWhere -Version $Version
-
-    if (!$vsPath)
-    {
-        Write-Warning "Could not find Visual Studio installation path for version '$version'"
-        return;
-    }
-
-    $vsvars32FullPath = Join-Path $vsPath $BatFile
-
-    Set-VSEnv $vsvars32FullPath -Architecture $Architecture -HostArchitecture $HostArchitecture
-}
-
-function Set-WAIK
+<#
+.SYNOPSIS
+Find and use Visual Studio 2012 (10.0).
+#>
+function Use-VS2010
 {
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    $pesetenvFullPath = "C:\Program Files\Windows AIK\Tools\PETools\pesetenv.cmd"
-
-    if (-not (Test-Path $pesetenvFullPath))
-    {
-        Write-Warning "Could not find pesetenv.cmd"
-        return;
-    }
-
-    Write-Verbose "Importing Windows AIK environment";
-
-    Import-Env $pesetenvFullPath
+    Use-VSEnvComnTool 'VS100COMNTOOLS' 'vsvars32.bat'
 }
 
-function Set-VS2010
+<#
+.SYNOPSIS
+Find and use Visual Studio 2012 (11.0).
+#>
+function Use-VS2012
 {
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Set-VSEnvComnTool 'VS100COMNTOOLS' 'vsvars32.bat'
+    Use-VSEnvComnTool 'VS110COMNTOOLS' 'vsvars32.bat'
 }
 
-function Set-VS2012
+<#
+.SYNOPSIS
+Find and use Visual Studio 2013 (12.0).
+#>
+function Use-VS2013
 {
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Set-VSEnvComnTool 'VS110COMNTOOLS' 'vsvars32.bat'
+    Use-VSEnvComnTool 'VS120COMNTOOLS' 'vsvars32.bat'
 }
 
-function Set-VS2013
+<#
+.SYNOPSIS
+Find and use Visual Studio 2015 (14.0).
+#>
+function Use-VS2015
 {
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Set-VSEnvComnTool 'VS120COMNTOOLS' 'vsvars32.bat'
+    Use-VSEnvComnTool 'VS140COMNTOOLS' 'VsDevCmd.bat'
 }
 
-function Set-VS2015
+<#
+.SYNOPSIS
+Find and use Visual Studio 2017 (15.0).
+#>
+function Use-VS2017
 {
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Set-VSEnvComnTool 'VS140COMNTOOLS' 'VsDevCmd.bat'
+    Use-VisualStudioInstance -Version 2017
 }
 
-function Set-VS2017
+<#
+.SYNOPSIS
+Find and use Visual Studio 2019 (16.0).
+#>
+function Use-VS2019
 {
     [CmdletBinding(SupportsShouldProcess)]
     param
@@ -280,10 +317,14 @@ function Set-VS2017
         [string] $HostArchitecture = "x86"
     )
 
-    Set-VSEnvVSWhere -Version '[15.0,16.0)' -batFile 'Common7\Tools\VsDevCmd.bat' -Architecture $Architecture -HostArchitecture $HostArchitecture
+    Use-VisualStudioInstance -Version 2019 -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
-function Set-VS2019
+<#
+.SYNOPSIS
+Find and use Visual Studio 2022 (17.0).
+#>
+function Use-VS2022
 {
     [CmdletBinding(SupportsShouldProcess)]
     param
@@ -295,33 +336,24 @@ function Set-VS2019
         [string] $HostArchitecture = "x86"
     )
 
-    Get-VisualStudioInstance -Version 16 | Set-VisualStudioInstance -Architecture $Architecture -HostArchitecture $HostArchitecture
+    Use-VisualStudioInstance -Version 2022 -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
-function Set-VS2022
-{
-    [CmdletBinding(SupportsShouldProcess)]
-    param
-    (
-        [ValidateSet("x86", "amd64", "arm", "arm64")]
-        [string] $Architecture = "x86",
-
-        [ValidateSet("x86", "amd64")]
-        [string] $HostArchitecture = "x86"
-    )
-
-    Get-VisualStudioInstance -Version 17 | Set-VisualStudioInstance -Architecture $Architecture -HostArchitecture $HostArchitecture
-}
-
-function Set-VisualStudioInstance
+<#
+.SYNOPSIS
+Sets up the environment to use the given Visual Studio instance.
+#>
+function Use-VisualStudioInstance
 {
     [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Version')]
     param
     (
+        # The instance to use.
         [Parameter(ParameterSetName = 'Instance', Position = 0, Mandatory, ValueFromPipeline)]
         [ValidateNotNullOrEmpty()]
         [PSObject] $Instance,
 
+        # The version to use.
         [Parameter(ParameterSetName = 'Version', Position = 0, Mandatory, ValueFromPipeline)]
         [string] $Version
     )
@@ -333,11 +365,15 @@ function Set-VisualStudioInstance
             'Instance' {}
             'Version'
             {
-                $Instance = Get-VisualStudioInstance -Version $Version
-                if (!$Instance)
+                # PSCRAP: can't assign to Instance directly b/c it will set a MetadataError if it does.
+                $instanceForVersion = Get-VisualStudioInstance -Version $Version
+                if (!$instanceForVersion)
                 {
+                    # Don't need to write error, Get-VisualStudioInstance should have done that.
                     return
                 }
+
+                $Instance = $instanceForVersion
             }
         }
 
@@ -355,10 +391,17 @@ function Set-VisualStudioInstance
         }
 
         Write-Verbose "Found ${vsvars32}"
-        Set-VSEnv $vsvars32
+        if ($PSCmdlet.ShouldProcess("Version: ${vsvars32}, Path: ${vsvars32}", "Use Visual Studio version"))
+        {
+            Use-VSEnv $vsvars32
+        }
     }
 }
 
+<#
+.SYNOPSIS
+Clears the environment of any Visual Studio instance set by this tool.
+#>
 function Clear-VisualStudioInstance
 {
     [CmdletBinding(SupportsShouldProcess)]

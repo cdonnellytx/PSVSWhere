@@ -9,17 +9,16 @@
     CLRVersion = '4.0'
     FunctionsToExport = @(
         'Get-VisualStudioInstance',
-        'Set-VisualStudioInstance',
+        'Use-VisualStudioInstance',
         'Clear-VisualStudioInstance',
-        'Set-VS2010',
-        'Set-VS2012',
-        'Set-VS2013',
-        'Set-VS2015',
-        'Set-VS2017',
-        'Set-VS2019',
-        'Clear-VisualStudioInstance',
-        'Set-VS2022',
-        'Set-WAIK')
+        'Use-VS2010',
+        'Use-VS2012',
+        'Use-VS2013',
+        'Use-VS2015',
+        'Use-VS2017',
+        'Use-VS2019',
+        'Use-VS2022'
+    )
     AliasesToExport = @()
     HelpInfoURI = 'https://github.com/cdonnellytx/PSVSWhere'
     PrivateData = @{
