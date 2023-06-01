@@ -166,8 +166,7 @@ function Get-VisualStudioInstance
         $v = $v | Where-Object channelId -notlike '*.Preview'
     }
 
-    $v | Add-Member -MemberType AliasProperty -Name 'PSPath' -Value 'installationPath'
-    return $v
+    $v | Add-Member -PassThru -MemberType AliasProperty -Name 'PSPath' -Value 'installationPath'
 }
 
 function Set-VSEnvComnTool
