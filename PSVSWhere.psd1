@@ -27,6 +27,6 @@
     PrivateData = @{
         Tags = 'VisualStudio'
         ProjectUri = 'https://github.com/cdonnellytx/PSVSWhere'
-        PSData = @{ Prerelease = 'beta4' }
+        PSData = @{ Prerelease = 'beta5' }
     }
 }

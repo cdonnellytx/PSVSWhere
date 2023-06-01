@@ -18,12 +18,12 @@ function Use-VSEnv
 
         # The architecture for compiled binaries/libraries
         [Parameter(Mandatory)]
-        [ValidateSet("x86", "amd64", "arm", "arm64")]
+        [ValidateSet("x86", "x64", "arm", "arm64")]
         [string] $Architecture,
 
         # The architecture of compiler binaries
         [Parameter(Mandatory)]
-        [ValidateSet("x86", "amd64")]
+        [ValidateSet("x86", "x64")]
         [string] $HostArchitecture
     )
 
@@ -240,12 +240,12 @@ function Use-VSEnvComnToolsVariable
 
         # The architecture for compiled binaries/libraries
         [Parameter()]
-        [ValidateSet("x86", "amd64", "arm", "arm64")]
+        [ValidateSet("x86", "x64", "arm", "arm64")]
         [string] $Architecture = "x86",
 
         # The architecture of compiler binaries
         [Parameter()]
-        [ValidateSet("x86", "amd64")]
+        [ValidateSet("x86", "x64")]
         [string] $HostArchitecture = "x86"
     )
 
@@ -332,12 +332,12 @@ function Use-VS2019
     (
         # The architecture for compiled binaries/libraries
         [Parameter()]
-        [ValidateSet("x86", "amd64", "arm", "arm64")]
+        [ValidateSet("x86", "x64", "arm", "arm64")]
         [string] $Architecture = "x86",
 
         # The architecture of compiler binaries
         [Parameter()]
-        [ValidateSet("x86", "amd64")]
+        [ValidateSet("x86", "x64")]
         [string] $HostArchitecture = "x86"
     )
 
@@ -355,12 +355,12 @@ function Use-VS2022
     (
         # The architecture for compiled binaries/libraries
         [Parameter()]
-        [ValidateSet("x86", "amd64", "arm", "arm64")]
+        [ValidateSet("x86", "x64", "arm", "arm64")]
         [string] $Architecture = "x86",
 
         # The architecture of compiler binaries
         [Parameter()]
-        [ValidateSet("x86", "amd64")]
+        [ValidateSet("x86", "x64")]
         [string] $HostArchitecture = "x86"
     )
 
@@ -387,12 +387,12 @@ function Use-VisualStudioInstance
 
         # The architecture for compiled binaries/libraries
         [Parameter()]
-        [ValidateSet("x86", "amd64", "arm", "arm64")]
+        [ValidateSet("x86", "x64", "arm", "arm64")]
         [string] $Architecture = "x86",
 
         # The architecture of compiler binaries
         [Parameter()]
-        [ValidateSet("x86", "amd64")]
+        [ValidateSet("x86", "x64")]
         [string] $HostArchitecture = "x86",
 
         # Returns an object representing the item with which you are working. By default, this cmdlet doesn't generate any output.
