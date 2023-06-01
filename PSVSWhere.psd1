@@ -20,10 +20,13 @@
         'Use-VS2022'
     )
     AliasesToExport = @()
+    VariablesToExport = @(
+        'VisualStudioInstance'
+    )
     HelpInfoURI = 'https://github.com/cdonnellytx/PSVSWhere'
     PrivateData = @{
         Tags = 'VisualStudio'
         ProjectUri = 'https://github.com/cdonnellytx/PSVSWhere'
-        PSData = @{ Prerelease = 'beta3' }
+        PSData = @{ Prerelease = 'beta4' }
     }
 }

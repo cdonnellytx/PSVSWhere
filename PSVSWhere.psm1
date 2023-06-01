@@ -2,6 +2,10 @@ param()
 
 Set-StrictMode -Version Latest
 
+[Hashtable] $Environment = $null
+
+[PSObject] $VisualStudioInstance = $null
+
 function Use-VSEnv
 {
     [CmdletBinding(SupportsShouldProcess)]
@@ -31,7 +35,8 @@ function Use-VSEnv
 
     if ($PSCmdlet.ShouldProcess($LiteralPath, 'Import Visual Studio environment'))
     {
-        $cmd = "`"$LiteralPath`" -arch=$Architecture -host_arch=$HostArchitecture > nul & set"
+        $cmd = "`"$LiteralPath`" -arch=$Architecture -host_arch=$HostArchitecture -no_logo & set"
+        Write-Debug "cmd /c `"$cmd`""
         cmd /c $cmd | ForEach-Object {
             $p, $v = $_.split('=')
             $orig = $null
@@ -68,7 +73,8 @@ function Restore-Env
 .SYNOPSIS
 Wrapper for `vswhere.exe`
 
-.SCOPE Private
+.SCOPE
+Private
 #>
 function Invoke-VSWhere
 {
@@ -212,9 +218,11 @@ function Get-VisualStudioInstance
 }
 
 <#
-Resolve the
+.SYNOPSIS
+Resolve the Visual Studio batch file based on the VSxxyCOMNTOOLS environment variable.
 
-.SCOPE Private
+.SCOPE
+Private
 #>
 function Use-VSEnvComnToolsVariable
 {
@@ -423,10 +431,10 @@ function Use-VisualStudioInstance
             }
         }
 
-        Write-Verbose "Found ${vsvars32}"
-        if ($PSCmdlet.ShouldProcess("Version: ${vsvars32}, Path: ${vsvars32}", "Use Visual Studio version"))
+        if ($PSCmdlet.ShouldProcess("Version: $($Instance.installationName), architecture: ${Architecture}, host architecture: ${HostArchitecture}", "Use Visual Studio version"))
         {
             Use-VSEnv -LiteralPath $vsvars32 -Architecture $Architecture -HostArchitecture $HostArchitecture
+            $Script:VisualStudioInstance = $Instance
         }
 
         if ($PassThru)
@@ -447,4 +455,14 @@ function Clear-VisualStudioInstance
 
     Restore-Env
     $Script:Environment = $null
+    $Script:VisualStudioInstance = $null
 }
+
+
+$ExecutionContext.SessionState.Module.OnRemove = {
+    if ($Script:VisualStudioInstance) {
+        Clear-VisualStudioInstance
+    }
+}
+
+Export-ModuleMember -Variable 'VisualStudioInstance'
