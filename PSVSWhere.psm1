@@ -62,10 +62,14 @@ function Set-VSEnv
     Import-Env $vsvars32FullPath -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
-[CmdletBinding]
 function Set-VSEnvComnTools
 {
-    param([string] $envVar, $batFile)
+    [CmdletBinding()]
+    param
+    (
+        [string] $envVar,
+        [string] $BatFile
+    )
 
     if (-not (Test-Path Env:$envVar))
     {
