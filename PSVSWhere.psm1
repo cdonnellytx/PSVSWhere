@@ -2,7 +2,7 @@ param()
 
 function Import-Env
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [string] $BatFile,
@@ -24,19 +24,22 @@ function Import-Env
 
     $Script:Environment = @{};
 
-    $cmd = "`"$BatFile`" -arch=$Architecture -host_arch=$HostArchitecture > nul & set"
-    cmd /c $cmd | ForEach-Object {
-        $p, $v = $_.split('=')
-        $orig = $null
-        $orig = Get-Content Env:$p -ErrorAction SilentlyContinue
-        $Script:Environment[$p] = $orig
-        Set-Item -Path env:$p -Value $v
+    if ($PSCmdlet.ShouldProcess($BatFile, 'Import Visual Studio environment'))
+    {
+        $cmd = "`"$BatFile`" -arch=$Architecture -host_arch=$HostArchitecture > nul & set"
+        cmd /c $cmd | ForEach-Object {
+            $p, $v = $_.split('=')
+            $orig = $null
+            $orig = Get-Content Env:$p -ErrorAction SilentlyContinue
+            $Script:Environment[$p] = $orig
+            Set-Item -Path env:$p -Value $v
+        }
     }
 }
 
 function Set-VSEnv
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [string] $vsvars32FullPath,
@@ -77,7 +80,7 @@ function Set-VSEnvComnTools
 
 function Set-VSEnvVSWhere
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [string] $Version,
@@ -106,7 +109,7 @@ function Set-VSEnvVSWhere
 
 function Set-WAIK
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param()
 
     $pesetenvFullPath = "C:\Program Files\Windows AIK\Tools\PETools\pesetenv.cmd"
@@ -124,7 +127,7 @@ function Set-WAIK
 
 function Set-VS2010
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param()
 
     Set-VSEnvComnTools 'VS100COMNTOOLS' 'vsvars32.bat'
@@ -132,7 +135,7 @@ function Set-VS2010
 
 function Set-VS2012
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param()
 
     Set-VSEnvComnTools 'VS110COMNTOOLS' 'vsvars32.bat'
@@ -140,7 +143,7 @@ function Set-VS2012
 
 function Set-VS2013
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param()
 
     Set-VSEnvComnTools 'VS120COMNTOOLS' 'vsvars32.bat'
@@ -148,7 +151,7 @@ function Set-VS2013
 
 function Set-VS2015
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param()
 
     Set-VSEnvComnTools 'VS140COMNTOOLS' 'VsDevCmd.bat'
@@ -156,7 +159,7 @@ function Set-VS2015
 
 function Set-VS2017
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [ValidateSet("x86", "amd64", "arm", "arm64")]
@@ -170,7 +173,7 @@ function Set-VS2017
 
 function Set-VS2019
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [ValidateSet("x86", "amd64", "arm", "arm64")]
@@ -180,12 +183,13 @@ function Set-VS2019
         [string] $HostArchitecture = "x86"
     )
 
-    Set-VSEnvVSWhere -Version '[16.0,17.0)' -batFile 'Common7\Tools\VsDevCmd.bat' -Architecture $Architecture -HostArchitecture $HostArchitecture
+    #Set-VSEnvVSWhere -Version '[16.0,17.0)' -batFile 'Common7\Tools\VsDevCmd.bat' -Architecture $Architecture -HostArchitecture $HostArchitecture
+    Get-VisualStudioInstance -Version 16 | Set-VisualStudioInstance
 }
 
 function Set-VS2022
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [ValidateSet("x86", "amd64", "arm", "arm64")]
