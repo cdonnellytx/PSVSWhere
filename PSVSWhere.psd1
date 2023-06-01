@@ -1,6 +1,6 @@
 @{
     RootModule = 'PSVSWhere.psm1'
-    ModuleVersion = '0.1.0'
+    ModuleVersion = '1.0.0'
     GUID = '4ffb668e-bf60-4f97-aa04-7115cd3b075b'
     Author = 'Chris R. Donnelly', 'Eduardo Sousa'
     Description = 'Functions loading Visual Studio environment variables'
@@ -24,6 +24,6 @@
     PrivateData = @{
         Tags = 'VisualStudio'
         ProjectUri = 'https://github.com/cdonnellytx/PSVSWhere'
-        PSData = @{ Prerelease = 'alpha' }
+        PSData = @{ Prerelease = 'beta1' }
     }
 }
