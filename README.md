@@ -1,6 +1,12 @@
 # PSVSWhere
 
-PowerShell module for loading Visual Studio Environment variables. It provides the following function:
+PowerShell module for loading Visual Studio Environment variables.
+
+Derived from [PSVSEnv](https://github.com/ecsousa/PSVSEnv).
+
+## Using
+
+It provides the following function:
 
 * `Use-VS2010`: Loads environment variables for Visual Studio 2010
 * `Use-VS2012`: Loads environment variables for Visual Studio 2012
