@@ -1,31 +1,37 @@
 param()
 
-function Import-Env
+Set-StrictMode -Version Latest
+
+function Use-VSEnv
 {
     [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [Parameter(Position = 0, Mandatory)]
-        [string] $BatFile,
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript({ Test-Path -LiteralPath:$_ })]
+        [string] $LiteralPath,
 
         # The architecture for compiled binaries/libraries
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string] $Architecture,
 
         # The architecture of compiler binaries
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateSet("x86", "amd64")]
         [string] $HostArchitecture
     )
+
+    Write-Verbose "Importing Visual Studio environment variables from '${LiteralPath}', Architecture=${Architecture}, HostArchitecture=${HostArchitecture}";
 
     Restore-Env -ErrorAction Ignore
 
     $Script:Environment = @{};
 
-    if ($PSCmdlet.ShouldProcess($BatFile, 'Import Visual Studio environment'))
+    if ($PSCmdlet.ShouldProcess($LiteralPath, 'Import Visual Studio environment'))
     {
-        $cmd = "`"$BatFile`" -arch=$Architecture -host_arch=$HostArchitecture > nul & set"
+        $cmd = "`"$LiteralPath`" -arch=$Architecture -host_arch=$HostArchitecture > nul & set"
         cmd /c $cmd | ForEach-Object {
             $p, $v = $_.split('=')
             $orig = $null
@@ -56,31 +62,6 @@ function Restore-Env
     {
         Set-Item -Path env:$key -Value $Script:Environment[$key]
     }
-}
-
-function Use-VSEnv
-{
-    [CmdletBinding(SupportsShouldProcess)]
-    param
-    (
-        [Parameter(Position = 0, Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [ValidateScript({ Test-Path -LiteralPath:$_ })]
-        [string] $LiteralPath,
-
-        # The architecture for compiled binaries/libraries
-        [Parameter()]
-        [ValidateSet("x86", "amd64", "arm", "arm64")]
-        [string] $Architecture,
-
-        # The architecture of compiler binaries
-        [Parameter()]
-        [ValidateSet("x86", "amd64")]
-        [string] $HostArchitecture
-    )
-
-    Write-Verbose "Importing Visual Studio environment variables from '${LiteralPath}', Architecture=${Architecture}, HostArchitecture=${HostArchitecture}";
-    Import-Env $LiteralPath -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
 <#
@@ -230,13 +211,34 @@ function Get-VisualStudioInstance
     }
 }
 
-function Use-VSEnvComnTool
+<#
+Resolve the
+
+.SCOPE Private
+#>
+function Use-VSEnvComnToolsVariable
 {
     [CmdletBinding(SupportsShouldProcess)]
     param
     (
+        [Parameter(Position = 0, Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string] $envVar,
-        [string] $BatFile
+
+
+        [Parameter(Position = 1, Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string] $BatFile,
+
+        # The architecture for compiled binaries/libraries
+        [Parameter()]
+        [ValidateSet("x86", "amd64", "arm", "arm64")]
+        [string] $Architecture = "x86",
+
+        # The architecture of compiler binaries
+        [Parameter()]
+        [ValidateSet("x86", "amd64")]
+        [string] $HostArchitecture = "x86"
     )
 
     if (-not (Test-Path Env:$envVar))
@@ -247,7 +249,7 @@ function Use-VSEnvComnTool
 
     $vsvars32FullPath = Join-Path (Get-Item Env:$envVar).Value $BatFile
 
-    Use-VSEnv $vsvars32FullPath
+    Use-VSEnv -LiteralPath $vsvars32FullPath -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
 
@@ -260,7 +262,7 @@ function Use-VS2010
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Use-VSEnvComnTool 'VS100COMNTOOLS' 'vsvars32.bat'
+    Use-VSEnvComnToolsVariable 'VS100COMNTOOLS' 'vsvars32.bat'
 }
 
 <#
@@ -272,7 +274,7 @@ function Use-VS2012
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Use-VSEnvComnTool 'VS110COMNTOOLS' 'vsvars32.bat'
+    Use-VSEnvComnToolsVariable 'VS110COMNTOOLS' 'vsvars32.bat'
 }
 
 <#
@@ -284,7 +286,7 @@ function Use-VS2013
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Use-VSEnvComnTool 'VS120COMNTOOLS' 'vsvars32.bat'
+    Use-VSEnvComnToolsVariable 'VS120COMNTOOLS' 'vsvars32.bat'
 }
 
 <#
@@ -296,7 +298,7 @@ function Use-VS2015
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Use-VSEnvComnTool 'VS140COMNTOOLS' 'VsDevCmd.bat'
+    Use-VSEnvComnToolsVariable 'VS140COMNTOOLS' 'VsDevCmd.bat'
 }
 
 <#
@@ -421,7 +423,7 @@ function Use-VisualStudioInstance
         Write-Verbose "Found ${vsvars32}"
         if ($PSCmdlet.ShouldProcess("Version: ${vsvars32}, Path: ${vsvars32}", "Use Visual Studio version"))
         {
-            Use-VSEnv $vsvars32
+            Use-VSEnv -LiteralPath $vsvars32 -Architecture $Architecture -HostArchitecture $HostArchitecture
         }
     }
 }
