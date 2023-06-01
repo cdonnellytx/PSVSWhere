@@ -64,7 +64,7 @@ function Set-VSEnv
 
 function Set-VSEnvComnTools
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [string] $envVar,
