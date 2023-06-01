@@ -154,7 +154,13 @@ function Get-VisualStudioInstance
         [switch] $AllowPrerelease
     )
 
-    $v = Invoke-VSWhere -Version:($Version | Resolve-Version)
+    $splat = @{}
+    if ($Version)
+    {
+        $splat.Version = Resolve-Version $Version
+    }
+
+    $v = Invoke-VSWhere @splat
     if (!$AllowPrerelease)
     {
         $v = $v | Where-Object channelId -notlike '*.Preview'
