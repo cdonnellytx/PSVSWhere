@@ -8,9 +8,13 @@ function Import-Env
         [Parameter(Position = 0, Mandatory)]
         [string] $BatFile,
 
+        # The architecture for compiled binaries/libraries
+        [Parameter()]
         [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string] $Architecture,
 
+        # The architecture of compiler binaries
+        [Parameter()]
         [ValidateSet("x86", "amd64")]
         [string] $HostArchitecture
     )
@@ -64,9 +68,13 @@ function Use-VSEnv
         [ValidateScript({ Test-Path -LiteralPath:$_ })]
         [string] $LiteralPath,
 
+        # The architecture for compiled binaries/libraries
+        [Parameter()]
         [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string] $Architecture,
 
+        # The architecture of compiler binaries
+        [Parameter()]
         [ValidateSet("x86", "amd64")]
         [string] $HostArchitecture
     )
@@ -312,9 +320,13 @@ function Use-VS2019
     [CmdletBinding(SupportsShouldProcess)]
     param
     (
+        # The architecture for compiled binaries/libraries
+        [Parameter()]
         [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string] $Architecture = "x86",
 
+        # The architecture of compiler binaries
+        [Parameter()]
         [ValidateSet("x86", "amd64")]
         [string] $HostArchitecture = "x86"
     )
@@ -331,9 +343,13 @@ function Use-VS2022
     [CmdletBinding(SupportsShouldProcess)]
     param
     (
+        # The architecture for compiled binaries/libraries
+        [Parameter()]
         [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string] $Architecture = "x86",
 
+        # The architecture of compiler binaries
+        [Parameter()]
         [ValidateSet("x86", "amd64")]
         [string] $HostArchitecture = "x86"
     )
@@ -357,7 +373,17 @@ function Use-VisualStudioInstance
 
         # The version to use.
         [Parameter(ParameterSetName = 'Version', Position = 0, Mandatory, ValueFromPipeline)]
-        [string] $Version
+        [string] $Version,
+
+        # The architecture for compiled binaries/libraries
+        [Parameter()]
+        [ValidateSet("x86", "amd64", "arm", "arm64")]
+        [string] $Architecture = "x86",
+
+        # The architecture of compiler binaries
+        [Parameter()]
+        [ValidateSet("x86", "amd64")]
+        [string] $HostArchitecture = "x86"
     )
 
     process
