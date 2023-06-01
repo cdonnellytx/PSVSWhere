@@ -62,6 +62,73 @@ function Set-VSEnv
     Import-Env $vsvars32FullPath -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
+function Invoke-VSWhere
+{
+    [CmdletBinding()]
+    [OutputType([PSObject[]])]
+    param
+    (
+        # Finds all instances regardless if they are complete.
+        [switch] $All,
+
+        # One or more products to find.
+        # Defaults to Community, Professional, and Enterprise.
+        # Specify `*` by itself to search all product instances installed.
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [Alias('Products')]
+        [ValidateSet('Community', 'Professional', 'Enterprise', '*')]
+        [string[]] $Product,
+
+        # One or more workloads or components required when finding instances.
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [Alias('Requires')]
+        [string[]] $Require,
+
+        # A version range for instances to find. Example: [15.0,16.0) will find versions 15.*.
+        [string] $Version,
+
+        # Return only the newest version and last installed.
+        [switch] $Latest
+    )
+
+    $VSWhereArgs = @()
+    if ($All) { $VSWhereArgs += '-all' }
+    if ($Product) { $VSWhereArgs += '-products', ($Product -join ',') }
+    if ($Require) { $VSWhereArgs += '-requires', ($Require -join ',') }
+    if ($Version) { $VSWhereArgs += '-version', $Version }
+    if ($Latest) { $VSWhereArgs += '-latest' }
+
+    & "${PSScriptRoot}\vswhere.exe" -format json $VSWhereArgs | ConvertFrom-Json
+}
+
+function Get-VisualStudioInstance
+{
+    [CmdletBinding()]
+    [OutputType([PSObject[]])]
+    param
+    (
+        # The version by which to limit.
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $Version,
+
+        # Allow prerelease versions.
+        [Parameter()]
+        [switch] $AllowPrerelease
+    )
+
+    $v = Invoke-VSWhere -Version:$Version
+    if (!$AllowPrerelease)
+    {
+        $v = $v | Where-Object channelId -notlike '*.Preview'
+    }
+
+    $v | Add-Member -MemberType AliasProperty -Name 'PSPath' -Value 'installationPath'
+    return $v
+}
+
 function Set-VSEnvComnTools
 {
     [CmdletBinding(SupportsShouldProcess)]
@@ -98,7 +165,7 @@ function Set-VSEnvVSWhere
         [string] $HostArchitecture
     )
 
-    $vsPath = & "$PSScriptRoot\vswhere.exe" -version $version -property installationPath
+    $vsPath = Invoke-VSWhere -Version $Version
 
     if (!$vsPath)
     {
@@ -187,8 +254,7 @@ function Set-VS2019
         [string] $HostArchitecture = "x86"
     )
 
-    #Set-VSEnvVSWhere -Version '[16.0,17.0)' -batFile 'Common7\Tools\VsDevCmd.bat' -Architecture $Architecture -HostArchitecture $HostArchitecture
-    Get-VisualStudioInstance -Version 16 | Set-VisualStudioInstance
+    Get-VisualStudioInstance -Version 16 | Set-VisualStudioInstance -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
 function Set-VS2022
@@ -203,7 +269,37 @@ function Set-VS2022
         [string] $HostArchitecture = "x86"
     )
 
-    Set-VSEnvVSWhere -Version '[17.0,18.0)' -batFile 'Common7\Tools\VsDevCmd.bat' -Architecture $Architecture -HostArchitecture $HostArchitecture
+    Get-VisualStudioInstance -Version 17 | Set-VisualStudioInstance -Architecture $Architecture -HostArchitecture $HostArchitecture
+}
+
+function Set-VisualStudioInstance
+{
+    [CmdletBinding(SupportsShouldProcess)]
+    param
+    (
+        [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
+        [ValidateNotNullOrEmpty()]
+        [PSObject] $Instance
+    )
+
+    process
+    {
+        $vsvars32 = $Instance | Get-ChildItem -Include 'Common7\Tools\VsDevCmd.bat'
+        if (!$vsvars32)
+        {
+            # Fallback to crawling
+            $vsvars32 = $Instance | Get-ChildItem -Depth 3 -Include 'VsDevCmd.bat', 'vsvars32.bat' | Select-Object -First 1
+        }
+
+        if ($vsvars32)
+        {
+            Set-VSEnv $vsvars32.FullName -Architecture $Architecture -HostArchitecture $HostArchitecture
+        }
+        else
+        {
+            Write-Error "Cannot find vsdevcmd.bat or vsvars32.bat for $Instance"
+        }
+    }
 }
 
 Set-Alias vs2010 Set-VS2010
