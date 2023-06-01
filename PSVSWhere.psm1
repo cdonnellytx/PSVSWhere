@@ -274,6 +274,7 @@ function Set-VS2017
         [ValidateSet("x86", "amd64")]
         [string] $HostArchitecture = "x86"
     )
+
     Set-VSEnvVSWhere -Version '[15.0,16.0)' -batFile 'Common7\Tools\VsDevCmd.bat' -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
