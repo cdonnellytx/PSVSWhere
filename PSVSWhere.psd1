@@ -18,15 +18,7 @@
         'Set-VS2019',
         'Set-VS2022',
         'Set-WAIK')
-    AliasesToExport = @(
-        'vs2010',
-        'vs2012',
-        'vs2013',
-        'vs2015',
-        'vs2017',
-        'vs2019',
-        'vs2022',
-        'waik')
+    AliasesToExport = @()
     HelpInfoURI = 'https://github.com/cdonnellytx/PSVSWhere'
     PrivateData = @{
         Tags = 'VisualStudio'
