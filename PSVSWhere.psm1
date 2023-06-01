@@ -385,7 +385,10 @@ function Use-VisualStudioInstance
         # The architecture of compiler binaries
         [Parameter()]
         [ValidateSet("x86", "amd64")]
-        [string] $HostArchitecture = "x86"
+        [string] $HostArchitecture = "x86",
+
+        # Returns an object representing the item with which you are working. By default, this cmdlet doesn't generate any output.
+        [switch] $PassThru
     )
 
     process
@@ -424,6 +427,11 @@ function Use-VisualStudioInstance
         if ($PSCmdlet.ShouldProcess("Version: ${vsvars32}, Path: ${vsvars32}", "Use Visual Studio version"))
         {
             Use-VSEnv -LiteralPath $vsvars32 -Architecture $Architecture -HostArchitecture $HostArchitecture
+        }
+
+        if ($PassThru)
+        {
+            Write-Output $Instance
         }
     }
 }
