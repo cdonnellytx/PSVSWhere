@@ -1,16 +1,19 @@
 
 
-function Import-Env {
+function Import-Env
+{
     param(
         [string]$batFile,
-        [ValidateSet("x86","amd64","arm","arm64")]
+        [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string]$Architecture,
-        [ValidateSet("x86","amd64")]
+        [ValidateSet("x86", "amd64")]
         [string]$HostArchitecture
     )
 
-    if($Script:Environment) {
-        ForEach($key in $Script:Environment.Keys) {
+    if ($Script:Environment)
+    {
+        ForEach ($key in $Script:Environment.Keys)
+        {
             Set-Item -path env:$key -value $Script:Environment[$key]
         }
     }
@@ -29,16 +32,18 @@ function Import-Env {
 }
 
 [CmdletBinding]
-function Set-VSEnv {
+function Set-VSEnv
+{
     param(
         $vsvars32FullPath,
-        [ValidateSet("x86","amd64","arm","arm64")]
+        [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string]$Architecture,
-        [ValidateSet("x86","amd64")]
+        [ValidateSet("x86", "amd64")]
         [string]$HostArchitecture
     )
 
-    if(-not(Test-Path $vsvars32FullPath)) {
+    if (-not(Test-Path $vsvars32FullPath))
+    {
         Write-Warning "Could not find file '$vsvars32FullPath'";
         return;
     }
@@ -49,10 +54,12 @@ function Set-VSEnv {
 }
 
 [CmdletBinding]
-function Set-VSEnvComnTools {
+function Set-VSEnvComnTools
+{
     param([string] $envVar, $batFile)
 
-    if(-not(Test-Path Env:$envVar)) {
+    if (-not(Test-Path Env:$envVar))
+    {
         Write-Warning "Environment variable $envVar is undefined"
         return;
     }
@@ -63,19 +70,21 @@ function Set-VSEnvComnTools {
 }
 
 [CmdletBinding]
-function Set-VSEnvVSWhere {
+function Set-VSEnvVSWhere
+{
     param(
         [string]$version, 
         $batFile,
-        [ValidateSet("x86","amd64","arm","arm64")]
+        [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string]$Architecture,
-        [ValidateSet("x86","amd64")]
+        [ValidateSet("x86", "amd64")]
         [string]$HostArchitecture
     )
 
     $vsPath = & "$PSScriptRoot\vswhere.exe" -version $version -property installationPath
 
-    if(-not($vsPath)) {
+    if (-not($vsPath))
+    {
         Write-Warning "Could not find Visual Studio installation path for version '$version'"
         return;
     }
@@ -86,10 +95,12 @@ function Set-VSEnvVSWhere {
 }
 
 [CmdletBinding]
-function Set-WAIK {
+function Set-WAIK
+{
     $pesetenvFullPath = "C:\Program Files\Windows AIK\Tools\PETools\pesetenv.cmd"
 
-    if(-not(Test-Path $pesetenvFullPath)) {
+    if (-not(Test-Path $pesetenvFullPath))
+    {
         Write-Warning "Could not find pesetenv.cmd"
         return;
     }
@@ -100,53 +111,60 @@ function Set-WAIK {
 }
 
 [CmdletBinding]
-function Set-VS2010 {
+function Set-VS2010
+{
     Set-VSEnvComnTools 'VS100COMNTOOLS' 'vsvars32.bat'
 }
 
 [CmdletBinding]
-function Set-VS2012 {
+function Set-VS2012
+{
     Set-VSEnvComnTools 'VS110COMNTOOLS' 'vsvars32.bat'
 }
 
 [CmdletBinding]
-function Set-VS2013 {
+function Set-VS2013
+{
     Set-VSEnvComnTools 'VS120COMNTOOLS' 'vsvars32.bat'
 }
 
 [CmdletBinding]
-function Set-VS2015 {
+function Set-VS2015
+{
     Set-VSEnvComnTools 'VS140COMNTOOLS' 'VsDevCmd.bat'
 }
 
 [CmdletBinding]
-function Set-VS2017 {
+function Set-VS2017
+{
     param(
-        [ValidateSet("x86","amd64","arm","arm64")]
+        [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string]$Architecture = "x86",
-        [ValidateSet("x86","amd64")]
+        [ValidateSet("x86", "amd64")]
         [string]$HostArchitecture = "x86"
     )
     Set-VSEnvVSWhere -version '[15.0,16.0)' -batFile 'Common7\Tools\VsDevCmd.bat' -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
 [CmdletBinding]
-function Set-VS2019 {
+function Set-VS2019
+{
     param(
-        [ValidateSet("x86","amd64","arm","arm64")]
+        [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string]$Architecture = "x86",
-        [ValidateSet("x86","amd64")]
+        [ValidateSet("x86", "amd64")]
         [string]$HostArchitecture = "x86"
     )
     Set-VSEnvVSWhere -version '[16.0,17.0)' -batFile 'Common7\Tools\VsDevCmd.bat' -Architecture $Architecture -HostArchitecture $HostArchitecture
 }
 
 [CmdletBinding]
-function Set-VS2022 {
+function Set-VS2022
+{
     param(
-        [ValidateSet("x86","amd64","arm","arm64")]
+        [ValidateSet("x86", "amd64", "arm", "arm64")]
         [string]$Architecture = "x86",
-        [ValidateSet("x86","amd64")]
+        [ValidateSet("x86", "amd64")]
         [string]$HostArchitecture = "x86"
     )
     Set-VSEnvVSWhere -version '[17.0,18.0)' -batFile 'Common7\Tools\VsDevCmd.bat' -Architecture $Architecture -HostArchitecture $HostArchitecture
