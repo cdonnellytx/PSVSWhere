@@ -4,7 +4,7 @@
     GUID = '4ffb668e-bf60-4f97-aa04-7115cd3b075b'
     Author = 'Chris R. Donnelly', 'Eduardo Sousa'
     Description = 'Functions loading Visual Studio environment variables'
-    PowerShellVersion = '3.0'
+    PowerShellVersion = '5.0'
     DotNetFrameworkVersion = '4.0'
     CLRVersion = '4.0'
     FunctionsToExport = @(
