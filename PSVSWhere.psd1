@@ -1,13 +1,15 @@
 @{
-    RootModule = 'PSVSEnv.psm1'
-    ModuleVersion = '1.3.0'
-    GUID = '201afb4b-c530-405a-a5cf-745fe70e2654'
-    Author = 'Eduardo Sousa'
+    RootModule = 'PSVSWhere.psm1'
+    ModuleVersion = '0.1.0'
+    GUID = '4ffb668e-bf60-4f97-aa04-7115cd3b075b'
+    Author = 'Chris R. Donnelly', 'Eduardo Sousa'
     Description = 'Functions loading Visual Studio environment variables'
     PowerShellVersion = '3.0'
     DotNetFrameworkVersion = '4.0'
     CLRVersion = '4.0'
     FunctionsToExport = @(
+        'Get-VisualStudioInstance',
+        'Set-VisualStudioInstance',
         'Set-VS2010',
         'Set-VS2012',
         'Set-VS2013',
@@ -25,9 +27,10 @@
         'vs2019',
         'vs2022',
         'waik')
-    HelpInfoURI = 'https://github.com/ecsousa/PSVSEnv'
+    HelpInfoURI = 'https://github.com/cdonnellytx/PSVSWhere'
     PrivateData = @{
         Tags = 'VisualStudio'
-        ProjectUri = 'https://github.com/ecsousa/PSVSEnv'
+        ProjectUri = 'https://github.com/cdonnellytx/PSVSWhere'
+        PSData = @{ Prerelease = 'alpha' }
     }
 }

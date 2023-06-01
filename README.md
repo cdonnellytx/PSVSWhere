@@ -1,4 +1,4 @@
-# PSVSEnv
+# PSVSWhere
 
 PowerShell module for loading Visual Studio Environment variables. It provides the following function:
 
@@ -28,12 +28,12 @@ Note: each one of these functions needs the related software installed.
 
 Windows 10 users:
 
-    Install-Module PSVSEnv -Scope CurrentUser
+    Install-Module PSVSWhere -Scope CurrentUser
 
 Otherwise, if you have [PsGet](http://psget.net/) installed:
 
 
-    Install-Module PSVSEnv
+    Install-Module PSVSWhere
   
-Or you can install it manually coping `PSVSEnv.psm1` to your modules folder (e.g. ` $Env:USERPROFILE\Documents\WindowsPowerShell\Modules\PSVSEnv\`)
+Or you can install it manually coping `PSVSWhere.psm1` to your modules folder (e.g. ` $Env:USERPROFILE\Documents\WindowsPowerShell\Modules\PSVSWhere\`)
 
