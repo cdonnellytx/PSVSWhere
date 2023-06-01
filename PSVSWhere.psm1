@@ -107,19 +107,21 @@ function Invoke-VSWhere
 
         # A version range for instances to find. Example: [15.0,16.0) will find versions 15.*.
         [Parameter()]
-        [string] $Version,
-
-        # Return only the newest version and last installed.
-        [Parameter()]
-        [switch] $Latest
+        [string] $Version
     )
 
     $VSWhereArgs = @()
     if ($All) { $VSWhereArgs += '-all' }
     if ($Product) { $VSWhereArgs += '-products', ($Product -join ',') }
     if ($Require) { $VSWhereArgs += '-requires', ($Require -join ',') }
-    if ($Version) { $VSWhereArgs += '-version', $Version }
-    if ($Latest) { $VSWhereArgs += '-latest' }
+    switch ($Version)
+    {
+        '' {}
+        # Special cases
+        'latest' { $VSWhereArgs += '-latest' }
+        # Everything else
+        default { $VSWhereArgs += '-version', $Version }
+    }
 
     Write-Debug "Running vswhere -format json ${VSWhereArgs}"
     & "${PSScriptRoot}\vswhere.exe" -format json $VSWhereArgs | ConvertFrom-Json
