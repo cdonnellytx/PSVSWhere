@@ -164,7 +164,7 @@ function Get-VisualStudioInstance
     return $v
 }
 
-function Set-VSEnvComnTools
+function Set-VSEnvComnTool
 {
     [CmdletBinding(SupportsShouldProcess)]
     param
@@ -236,7 +236,7 @@ function Set-VS2010
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Set-VSEnvComnTools 'VS100COMNTOOLS' 'vsvars32.bat'
+    Set-VSEnvComnTool 'VS100COMNTOOLS' 'vsvars32.bat'
 }
 
 function Set-VS2012
@@ -244,7 +244,7 @@ function Set-VS2012
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Set-VSEnvComnTools 'VS110COMNTOOLS' 'vsvars32.bat'
+    Set-VSEnvComnTool 'VS110COMNTOOLS' 'vsvars32.bat'
 }
 
 function Set-VS2013
@@ -252,7 +252,7 @@ function Set-VS2013
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Set-VSEnvComnTools 'VS120COMNTOOLS' 'vsvars32.bat'
+    Set-VSEnvComnTool 'VS120COMNTOOLS' 'vsvars32.bat'
 }
 
 function Set-VS2015
@@ -260,7 +260,7 @@ function Set-VS2015
     [CmdletBinding(SupportsShouldProcess)]
     param()
 
-    Set-VSEnvComnTools 'VS140COMNTOOLS' 'VsDevCmd.bat'
+    Set-VSEnvComnTool 'VS140COMNTOOLS' 'VsDevCmd.bat'
 }
 
 function Set-VS2017
