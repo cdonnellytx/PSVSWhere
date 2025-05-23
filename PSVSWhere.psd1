@@ -1,6 +1,6 @@
 @{
     RootModule = 'PSVSWhere.psm1'
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '1.0.1'
     GUID = '4ffb668e-bf60-4f97-aa04-7115cd3b075b'
     Author = 'Chris R. Donnelly', 'Eduardo Sousa'
     Description = 'Functions loading Visual Studio environment variables'
@@ -20,6 +20,7 @@
         'Use-VS2022'
     )
     AliasesToExport = @()
+    CmdletsToExport = @()
     VariablesToExport = @(
         'VisualStudioInstance'
     )
@@ -27,6 +28,6 @@
     PrivateData = @{
         Tags = 'VisualStudio'
         ProjectUri = 'https://github.com/cdonnellytx/PSVSWhere'
-        PSData = @{ Prerelease = 'beta5' }
+        PSData = @{ Prerelease = 'beta6' }
     }
 }
